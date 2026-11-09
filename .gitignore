@@ -3,3 +3,7 @@
 
 # Visual Studio Code
 .vscode
+
+# Wrangler
+.wrangler
+node_modules

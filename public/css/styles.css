@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'JetBrains Mono Variable';
-    src: url('../../assets/fonts/jetbrains/jetbrains.ttf') format('truetype');
+    src: url('../../assets/fonts/jetbrains/JetBrainsMono-VariableFont_wght.ttf') format('truetype');
     font-weight: 100 800;
     font-style: normal;
     font-display: swap;
@@ -8,7 +8,7 @@
 
 @font-face {
     font-family: 'Noto Sans Myanmar Variable';
-    src: url('../../assets/fonts/noto-sans-myanmar/NotoSansMyanmar-VariableFont_wdthwght.ttf') format('truetype');
+    src: url('../../assets/fonts/myanmar/NotoSansMyanmar-VariableFont.ttf') format('truetype');
     font-weight: 100 900;
     font-stretch: 62.5% 100%;
     font-style: normal;
