@@ -1,0 +1,750 @@
+@font-face {
+    font-family: 'JetBrains Mono Variable';
+    src: url('../../assets/fonts/jetbrains/jetbrains.ttf') format('truetype');
+    font-weight: 100 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Sans Myanmar Variable';
+    src: url('../../assets/fonts/noto-sans-myanmar/NotoSansMyanmar-VariableFont_wdthwght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-stretch: 62.5% 100%;
+    font-style: normal;
+    font-display: swap;
+    unicode-range: U+1000-109F, U+A9E0-A9FF, U+AA60-AA7F, U+200C-200D, U+25CC;
+}
+
+:root {
+    color-scheme: light dark;
+    --bg: #f6f1e7;
+    --fg: #2b2925;
+    --divider: rgb(43 41 37 / 0.25);
+    --selection-bg: rgb(43 41 37 / 0.16);
+    --grain-opacity: 0.08;
+    --grain-blend: multiply;
+    --nav-height: 32px;
+    --switch-height: 28px;
+    --tabbar-height: 60px;
+    --content-width: 43rem;
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --font-stack: 'JetBrains Mono Variable', 'Noto Sans Myanmar Variable', monospace;
+    --accent: #b5532c;
+    --accent-fg: #f6f1e7;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1c1a17;
+        --fg: #e8e2d6;
+        --divider: rgb(232 226 214 / 0.2);
+        --selection-bg: rgb(232 226 214 / 0.2);
+        --grain-opacity: 0.06;
+        --grain-blend: soft-light;
+        --accent: #e08a5f;
+        --accent-fg: #1c1a17;
+    }
+}
+
+/* Native selection: used as-is if JavaScript is off */
+::selection {
+    background-color: var(--selection-bg);
+    color: inherit;
+}
+
+/* With JavaScript on, hide the native highlight; the script draws its own */
+.has-selection-layer ::selection {
+    background-color: transparent;
+}
+
+body {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    padding: 48px 16px 16px;
+    box-sizing: border-box;
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-stack);
+}
+
+/* Zen column: every top-level section shares the same centered width */
+body > * {
+    width: 100%;
+    max-width: var(--content-width);
+    box-sizing: border-box;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: var(--grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+}
+
+/* Animated selection */
+.selection-layer {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: auto;
+    max-width: none;
+    pointer-events: none;
+}
+
+.selection-box {
+    position: absolute;
+    border-radius: 3px;
+    background-color: var(--selection-bg);
+    opacity: 0;
+    transform: scaleX(0.4);
+    transform-origin: left center;
+    transition:
+        opacity 0.2s ease,
+        transform 0.25s var(--ease-out),
+        left 0.12s ease,
+        width 0.12s ease;
+}
+
+.selection-box.from-right {
+    transform-origin: right center;
+}
+
+.selection-box.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* Header */
+.site-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 16px;
+}
+
+.site-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: var(--nav-height);
+    padding: 0 14px;
+    box-sizing: border-box;
+    border: 1px solid var(--divider);
+    border-radius: 0;
+    color: var(--fg);
+    font-size: 13px;
+    text-decoration: none;
+    transition:
+        border-radius 0.25s ease,
+        background-color 0.15s ease,
+        color 0.15s ease,
+        translate 0.2s var(--ease-out);
+}
+
+.nav-link i {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+    border-radius: calc(var(--nav-height) / 2);
+    background-color: var(--fg);
+    color: var(--bg);
+    outline: none;
+}
+
+/* Primary button: resume download */
+.nav-link--primary {
+    border-color: var(--accent);
+    background-color: var(--accent);
+    color: var(--accent-fg);
+}
+
+.nav-link--primary:hover,
+.nav-link--primary:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 85%, var(--fg));
+    background-color: color-mix(in srgb, var(--accent) 85%, var(--fg));
+    color: var(--accent-fg);
+}
+
+/* Content */
+.about {
+    margin: 16px 0 0;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1.8;
+    text-transform: uppercase;
+}
+
+/* Status line: location, timezone, availability */
+.status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 40px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: color-mix(in srgb, var(--fg) 65%, transparent);
+}
+
+.status-dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--accent);
+}
+
+/* Carousel sections (projects, stack) */
+.carousel-section {
+    margin-bottom: 48px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.carousel-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.carousel-count {
+    margin-right: 4px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, var(--fg) 65%, transparent);
+}
+
+.carousel-btn {
+    display: inline-grid;
+    place-items: center;
+    width: var(--nav-height);
+    height: var(--nav-height);
+    padding: 0;
+    border: 1px solid var(--divider);
+    border-radius: 0;
+    background: none;
+    color: var(--fg);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition:
+        border-radius 0.25s ease,
+        background-color 0.15s ease,
+        color 0.15s ease,
+        opacity 0.2s ease,
+        translate 0.2s var(--ease-out);
+}
+
+.carousel-btn:hover,
+.carousel-btn:focus-visible {
+    border-radius: calc(var(--nav-height) / 2);
+    background-color: var(--fg);
+    color: var(--bg);
+    outline: none;
+}
+
+/* At either end: faded and ignores the pointer */
+.carousel-btn:disabled {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.carousel-track {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+}
+
+.carousel-track::-webkit-scrollbar {
+    display: none;
+}
+
+.carousel-track:focus-visible {
+    outline: 1px dashed var(--fg);
+    outline-offset: 4px;
+}
+
+.project-card {
+    flex: 0 0 calc((100% - 16px) / 2);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--divider);
+    border-radius: 0;
+    color: var(--fg);
+    text-decoration: none;
+    scroll-snap-align: start;
+    transition:
+        border-color 0.2s ease,
+        border-radius 0.25s ease;
+}
+
+.project-card:hover,
+.project-card:focus-visible {
+    border-color: var(--fg);
+    border-radius: 12px;
+    outline: none;
+}
+
+.project-thumb {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 10;
+    margin-bottom: 4px;
+    border-radius: 0;
+    background-color: color-mix(in srgb, var(--fg) 6%, transparent);
+    transition: border-radius 0.25s ease;
+}
+
+.project-card:hover .project-thumb,
+.project-card:focus-visible .project-thumb {
+    border-radius: 6px;
+}
+
+.project-thumb span {
+    font-size: 32px;
+    font-weight: 700;
+    color: color-mix(in srgb, var(--fg) 20%, transparent);
+}
+
+.project-meta {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: color-mix(in srgb, var(--fg) 65%, transparent);
+}
+
+.project-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.project-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: color-mix(in srgb, var(--fg) 80%, transparent);
+}
+
+/* Stack: a static grid of soft filled tiles, no scrolling */
+.stack-section {
+    margin-bottom: 48px;
+}
+
+.stack-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.stack-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 120px;
+    padding: 12px;
+    box-sizing: border-box;
+    border-radius: 0;
+    background-color: color-mix(in srgb, var(--fg) 5%, transparent);
+    transition:
+        border-radius 0.25s ease,
+        background-color 0.2s ease;
+}
+
+.stack-card:hover {
+    border-radius: 12px;
+    background-color: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.stack-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.stack-index {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: color-mix(in srgb, var(--fg) 50%, transparent);
+}
+
+.stack-tag {
+    padding: 2px 4px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 9px;
+    letter-spacing: 0.04em;
+}
+
+.stack-name {
+    display: flex;
+    flex-direction: column;
+    margin: auto 0 0;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.stack-plus {
+    color: var(--accent);
+}
+
+.horizontal-divider {
+    height: 1px;
+    background-color: var(--divider);
+}
+
+/* Language change: old text drifts up and fades, new text rises in */
+.i18n {
+    transition:
+        opacity 0.2s ease,
+        transform 0.25s var(--ease-out),
+        filter 0.2s ease;
+}
+
+span.i18n {
+    display: inline-block;
+}
+
+.i18n.is-switching {
+    opacity: 0;
+    transform: translateY(-4px);
+    filter: blur(2px);
+}
+
+.i18n.is-resizing {
+    overflow: hidden;
+    transition:
+        opacity 0.2s ease,
+        transform 0.25s var(--ease-out),
+        filter 0.2s ease,
+        height 0.3s var(--ease-out);
+}
+
+.i18n.is-entering {
+    opacity: 0;
+    transform: translateY(4px);
+    filter: blur(2px);
+    transition: none;
+}
+
+/* Burmese: taller lines for stacked vowel marks and medials */
+:lang(my) .about {
+    line-height: 2.2;
+}
+
+/* Footer */
+.site-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--divider);
+}
+
+.copyright {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+}
+
+/* Language switch */
+.lang-switch {
+    position: relative;
+    display: inline-flex;
+    padding: 2px;
+    height: var(--switch-height);
+    box-sizing: border-box;
+    border: 1px solid var(--divider);
+    border-radius: 0;
+    transition: border-radius 0.25s ease;
+}
+
+.lang-switch:hover,
+.lang-switch:has(:focus-visible) {
+    border-radius: calc(var(--switch-height) / 2);
+}
+
+.lang-indicator {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 0;
+    width: 0;
+    background-color: var(--fg);
+    border-radius: 0;
+    transition:
+        transform 0.35s var(--ease-out),
+        width 0.35s var(--ease-out),
+        border-radius 0.25s ease;
+}
+
+.lang-switch:hover .lang-indicator,
+.lang-switch:has(:focus-visible) .lang-indicator {
+    border-radius: calc((var(--switch-height) - 6px) / 2);
+}
+
+/* No sliding on the first paint */
+.lang-switch:not(.is-ready) .lang-indicator {
+    transition: none;
+}
+
+.lang-option {
+    position: relative;
+    z-index: 1;
+    min-width: 36px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: calc((var(--switch-height) - 6px) / 2);
+    background: none;
+    color: var(--fg);
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease,
+        translate 0.2s var(--ease-out);
+}
+
+.lang-option[aria-pressed="true"] {
+    color: var(--bg);
+    cursor: default;
+}
+
+.lang-option:focus-visible {
+    outline: 1px dashed var(--fg);
+    outline-offset: 2px;
+}
+
+/* Without JavaScript the indicator never moves, so fill the active option directly */
+.lang-switch:not(.is-ready) .lang-option[aria-pressed="true"] {
+    background-color: var(--fg);
+}
+
+/* Linux-style cursor with morphing (mouse/trackpad only; enabled by JS) */
+.has-custom-cursor,
+.has-custom-cursor * {
+    cursor: none !important;
+}
+
+.cursor,
+.cursor-arrow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    max-width: none;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* The blob: hidden at the arrow tip, grows into buttons and the text bar */
+.cursor {
+    z-index: 9999;
+    width: 0;
+    height: 0;
+    background-color: var(--fg);
+    will-change: transform, width, height;
+}
+
+/* The arrow: a soft, rounded pointer — paper fill, ink outline */
+.cursor-arrow {
+    z-index: 10000;
+    width: 24px;
+    height: 24px;
+    will-change: transform;
+}
+
+.cursor-arrow svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+    overflow: visible;
+    transform-origin: 3px 2px;
+    filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.28));
+    transition:
+        opacity 0.15s ease,
+        transform 0.2s var(--ease-out);
+}
+
+.cursor-arrow path {
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+/* Thick ink layer underneath gives the rounded outline */
+.cursor-arrow .arrow-outline {
+    fill: var(--fg);
+    stroke: var(--fg);
+    stroke-width: 5;
+}
+
+/* Paper layer on top, slightly thinner, so a clean ink border shows around it */
+.cursor-arrow .arrow-fill {
+    fill: var(--bg);
+    stroke: var(--bg);
+    stroke-width: 1.6;
+}
+
+.cursor-visible .cursor,
+.cursor-visible .cursor-arrow {
+    opacity: 1;
+}
+
+.cursor-down .cursor-arrow svg {
+    transform: scale(0.9);
+}
+
+/* Over buttons and text, the arrow shrinks into its tip while the blob takes over */
+.cursor-hide-arrow .cursor-arrow svg {
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+/* On a button, the blob slides behind it and merges with the button's ink fill */
+.cursor-on-link .cursor {
+    z-index: -1;
+}
+
+.has-custom-cursor .lang-option:hover {
+    background-color: var(--fg);
+    color: var(--bg);
+}
+
+/* Mobile: bottom tab bar */
+@media (max-width: 600px) {
+    body {
+        padding: 16px 16px calc(16px + var(--tabbar-height) + env(safe-area-inset-bottom));
+    }
+
+    .site-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: 4px;
+        height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+        box-sizing: border-box;
+        background-color: color-mix(in srgb, var(--bg) 85%, transparent);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid var(--divider);
+    }
+
+    .nav-link {
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        height: 100%;
+        padding: 0;
+        border: none;
+        border-radius: 12px;
+        font-size: 10px;
+    }
+
+    .nav-link i {
+        font-size: 20px;
+    }
+
+    .nav-link:hover,
+    .nav-link:focus-visible {
+        border-radius: 12px;
+    }
+
+    .nav-link--primary {
+        background-color: transparent;
+        color: var(--accent);
+    }
+
+    .project-card {
+        flex-basis: 85%;
+    }
+
+    .stack-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-link,
+    .selection-box,
+    .lang-switch,
+    .lang-indicator,
+    .lang-option,
+    .i18n,
+    .cursor-arrow svg,
+    .carousel-btn,
+    .project-card,
+    .project-thumb,
+    .stack-card {
+        transition: none;
+    }
+
+    .carousel-track {
+        scroll-behavior: auto;
+    }
+}
