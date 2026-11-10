@@ -118,6 +118,7 @@
     document.addEventListener('selectionchange', schedule);
     window.addEventListener('resize', schedule);
     window.addEventListener('languagechange-ui', schedule);
+    window.addEventListener('layoutchange-ui', schedule);
 })();
 
 /* ---------- Footer year ---------- */
@@ -327,7 +328,7 @@
             next.disabled = atEnd;
 
             // Keep the selection highlight aligned while cards move
-            window.dispatchEvent(new Event('languagechange-ui'));
+            window.dispatchEvent(new Event('layoutchange-ui'));
         }
 
         function go(direction) {
@@ -426,7 +427,22 @@
         return { x: pointer.x, y: pointer.y, w: 0, h: 0, r: 0 };
     }
 
+    // The loop sleeps once the blob has settled and wakes on anything that can move its target.
+    // A hovered button can still move after the last event (magnetic pull transition, page or
+    // carousel scroll, text resizing after a language switch), so it keeps running for a while.
+    const SETTLE_MS = 1000; // longer than any transition that moves a hovered button
+    let running = false;
+    let lastWake = 0;
+
+    function wake() {
+        lastWake = performance.now();
+        if (running) return;
+        running = true;
+        requestAnimationFrame(loop);
+    }
+
     window.addEventListener('mousemove', (e) => {
+        wake();
         pointer.x = e.clientX;
         pointer.y = e.clientY;
         root.classList.add('cursor-visible');
@@ -460,25 +476,40 @@
     }, { passive: true });
 
     window.addEventListener('mousedown', () => {
+        wake();
         down = true;
         root.classList.add('cursor-down');
     });
     window.addEventListener('mouseup', () => {
+        wake();
         down = false;
         root.classList.remove('cursor-down');
     });
 
     document.addEventListener('mouseleave', () => {
+        wake();
         root.classList.remove('cursor-visible');
         releaseLink();
     });
     window.addEventListener('blur', () => root.classList.remove('cursor-visible'));
 
-    function loop() {
+    // Things that move a hovered button without a mouse event (scroll doesn't bubble: capture it)
+    window.addEventListener('scroll', wake, { capture: true, passive: true });
+    window.addEventListener('resize', wake);
+    window.addEventListener('languagechange-ui', wake);
+    window.addEventListener('layoutchange-ui', wake);
+    if (document.fonts) document.fonts.addEventListener('loadingdone', wake);
+
+    function loop(now) {
         const t = getTarget();
+        let settled = true;
         for (const key of ['x', 'y', 'w', 'h', 'r']) {
             cur[key] += (t[key] - cur[key]) * EASE;
+            if (Math.abs(t[key] - cur[key]) > 0.01) settled = false;
         }
+
+        const idle = settled && now - lastWake > SETTLE_MS;
+        if (idle) Object.assign(cur, t); // land exactly on the target before sleeping
 
         // Stay behind the button while on it, and while shrinking back out of its shape
         const behind = Boolean(link) || (cur.w > 4 && cur.h < cur.w * 2);
@@ -489,7 +520,11 @@
         cursor.style.borderRadius = `${cur.r}px`;
         cursor.style.transform = `translate3d(${cur.x - cur.w / 2}px, ${cur.y - cur.h / 2}px, 0)`;
 
+        if (idle) {
+            running = false;
+            return;
+        }
         requestAnimationFrame(loop);
     }
-    loop();
+    wake();
 })();
