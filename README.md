@@ -6,14 +6,14 @@ Personal portfolio site of Thet Maung, mobile software engineer. Live at <https:
 
 - Plain HTML, CSS and JavaScript: no framework, no bundler, no build step, no `package.json`.
 - Self-hosted variable fonts in WOFF2: JetBrains Mono, plus a Noto Sans Myanmar subset that only downloads when Burmese text is on the page (`unicode-range`).
-- Inline SVG icons (Hugeicons), no icon font.
-- Zero third-party requests, no cookies, no analytics. The only thing stored in the browser is the language choice (`localStorage`).
+- Inline SVG icons (Hugeicons, plus simple sun / moon / monitor icons for the theme switch), no icon font.
+- Zero third-party requests, no cookies, no analytics. The only things stored in the browser are the language and theme choices (`localStorage`).
 - Hosted on Cloudflare Workers Static Assets; security and cache headers in `_headers`.
 
 ## Features
 
 - **English / Burmese switch**: the language is picked before first paint (saved choice, else the browser language, else English), so Burmese visitors never see English flash first. Switching animates the text and saves the choice in `localStorage`.
-- **Light and dark** themes via `prefers-color-scheme`, including the favicon.
+- **Light, dark and system themes**: a footer switch, left of the language switch. System (the default) follows `prefers-color-scheme`; light or dark pins the theme and the browser UI color (`theme-color`). The choice is saved in `localStorage` and applied before first paint on both pages, so there is no flash of the other theme. The favicon follows the system scheme.
 - **Animated text selection**: highlight boxes drawn by `scripts.js`; the native highlight is used when JavaScript is off.
 - **Morphing cursor** that takes the shape of the hovered button and becomes a text bar over text. Only on fine pointers (mouse, trackpad); touch devices keep their normal behavior. The animation loop sleeps when the cursor is idle.
 - **Reduced motion**: with `prefers-reduced-motion`, UI transitions, the language animation, cursor easing and the buttons' magnetic pull are turned off.
@@ -25,11 +25,11 @@ Personal portfolio site of Thet Maung, mobile software engineer. Live at <https:
 
 ```
 .
-├── index.html            The page: markup, meta and sharing tags, inline first-paint language script
+├── index.html            The page: markup, meta and sharing tags, inline first-paint theme + language script
 ├── 404.html              Not-found page, served for any missing path (so all its URLs are root-relative)
 ├── public/
 │   ├── css/styles.css    All styles: @font-face, light/dark tokens, layout, animations
-│   └── js/scripts.js     Selection layer, footer year, translations + language switch,
+│   └── js/scripts.js     Selection layer, footer year, theme switch, translations + language switch,
 │                         carousel (not on the page right now), morphing cursor
 ├── assets/
 │   ├── fonts/            JetBrains Mono and Noto Sans Myanmar: WOFF2 served, TTF kept as fallback and source
@@ -73,13 +73,13 @@ npx wrangler dev
 
 ## Maintenance gotchas
 
-- **The inline `<head>` script is pinned by hash in the CSP.** `index.html` has one inline script (it sets the language before first paint). The `Content-Security-Policy` in `_headers` allows it only by its `sha256`. After any edit to it, even whitespace, recompute the hash and replace the `sha256-…` value in `_headers`. Otherwise browsers block the script and Burmese visitors see English first again. From the repo root:
+- **The inline `<head>` scripts are pinned by hash in the CSP.** `index.html` has one inline script (it sets the theme and language before first paint), and `404.html` has one (theme only). The `Content-Security-Policy` in `_headers` allows them only by their `sha256`, index first. After any edit to either, even whitespace, recompute its hash and replace that `sha256-…` value in `_headers`. Otherwise browsers block the script: Burmese visitors see English first again, and a saved theme flashes the system one first. From the repo root:
 
   ```bash
-  python3 -c "import re,hashlib,base64;s=re.search(r'<script>(.*?)</script>',open('index.html').read(),re.S).group(1);print(base64.b64encode(hashlib.sha256(s.encode()).digest()).decode())"
+  for f in index.html 404.html; do echo "$f"; python3 -c "import re,sys,hashlib,base64;s=re.search(r'<script>(.*?)</script>',open(sys.argv[1]).read(),re.S).group(1);print(base64.b64encode(hashlib.sha256(s.encode()).digest()).decode())" "$f"; done
   ```
 
-  The command hashes the first plain `<script>` in `index.html`. Any other inline script, or a `style="…"` attribute in HTML, is blocked by the CSP (`style-src 'self'`). Setting styles from JavaScript (`element.style.…`) is fine.
+  The command hashes the first plain `<script>` in each page. Any other inline script, or a `style="…"` attribute in HTML, is blocked by the CSP (`style-src 'self'`). Setting styles from JavaScript (`element.style.…`) is fine.
 - **Fonts, icons and favicons are cached for a year (`immutable`):** everything under `assets/fonts/`, `assets/ico/` and `assets/svgs/`. To change one, add it under a new file name and update its references: `@font-face` in `styles.css`, the font preload in `index.html` and `404.html`, the favicon links in both pages. Replaced in place, returning visitors keep the old file for up to a year.
 - **The résumé PDF revalidates on every request.** Replace `assets/pdfs/ThetMaungResume.pdf` in place and keep the file name.
 - **Translations live in `public/js/scripts.js`**, in `translations.en` and `translations.my`. Every `data-i18n="key"` in `index.html` needs that key in both; `title` sets the browser tab title. The English text written in `index.html` is what shows first and without JavaScript, so keep it identical to `translations.en`.

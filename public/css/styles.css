@@ -41,8 +41,10 @@
     --accent-fg: #fffff5;
 }
 
+/* Theme: follows the system scheme, unless the theme switch pinned one with data-theme on <html>
+   (set before first paint by the inline script). The two dark blocks must stay identical. */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
         --bg: #161616;
         --fg: #fffff5;
         --divider: rgb(255 255 245 / 0.2);
@@ -52,6 +54,22 @@
         --accent: #ef4847;
         --accent-fg: #161616;
     }
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #161616;
+    --fg: #fffff5;
+    --divider: rgb(255 255 245 / 0.2);
+    --selection-bg: rgb(255 255 245 / 0.2);
+    --grain-opacity: 0.06;
+    --grain-blend: soft-light;
+    --accent: #ef4847;
+    --accent-fg: #161616;
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
 }
 
 /* Native selection: used as-is if JavaScript is off */
@@ -542,8 +560,14 @@ span.i18n {
     letter-spacing: 0.04em;
 }
 
-/* Language switch */
-.lang-switch {
+/* Footer switches: theme, then language. Both share the .switch look */
+.footer-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.switch {
     position: relative;
     display: inline-flex;
     padding: 2px;
@@ -554,12 +578,12 @@ span.i18n {
     transition: border-radius 0.25s ease;
 }
 
-.lang-switch:hover,
-.lang-switch:has(:focus-visible) {
+.switch:hover,
+.switch:has(:focus-visible) {
     border-radius: calc(var(--switch-height) / 2);
 }
 
-.lang-indicator {
+.switch-indicator {
     position: absolute;
     top: 2px;
     bottom: 2px;
@@ -573,17 +597,17 @@ span.i18n {
         border-radius 0.25s ease;
 }
 
-.lang-switch:hover .lang-indicator,
-.lang-switch:has(:focus-visible) .lang-indicator {
+.switch:hover .switch-indicator,
+.switch:has(:focus-visible) .switch-indicator {
     border-radius: calc((var(--switch-height) - 6px) / 2);
 }
 
 /* No sliding on the first paint */
-.lang-switch:not(.is-ready) .lang-indicator {
+.switch:not(.is-ready) .switch-indicator {
     transition: none;
 }
 
-.lang-option {
+.switch-option {
     position: relative;
     z-index: 1;
     min-width: 36px;
@@ -602,19 +626,45 @@ span.i18n {
         translate 0.2s var(--ease-out);
 }
 
-.lang-option[aria-pressed="true"] {
+.switch-option[aria-pressed="true"] {
     color: var(--bg);
     cursor: default;
 }
 
-.lang-option:focus-visible {
+.switch-option:focus-visible {
     outline: 1px dashed var(--fg);
     outline-offset: 2px;
 }
 
 /* Without JavaScript the indicator never moves, so fill the active option directly */
-.lang-switch:not(.is-ready) .lang-option[aria-pressed="true"] {
+.switch:not(.is-ready) .switch-option[aria-pressed="true"] {
     background-color: var(--fg);
+}
+
+/* Theme switch: icon options. It only works with JavaScript, so it stays invisible (keeping its
+   space, so nothing shifts) until scripts.js has set the pressed option */
+.theme-switch:not(.is-ready) {
+    visibility: hidden;
+}
+
+.theme-switch .switch-option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+}
+
+.theme-switch svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* While the theme changes, swap every color in one step instead of each element fading at its own
+   pace. The switch keeps its motion */
+.is-theme-switching *:not(.switch, .switch *),
+.is-theme-switching *::before,
+.is-theme-switching *::after {
+    transition: none !important;
 }
 
 /* Linux-style cursor with morphing (mouse/trackpad only; enabled by JS) */
@@ -702,7 +752,7 @@ span.i18n {
     z-index: -1;
 }
 
-.has-custom-cursor .lang-option:hover {
+.has-custom-cursor .switch-option:hover {
     background-color: var(--fg);
     color: var(--bg);
 }
@@ -770,9 +820,9 @@ span.i18n {
 @media (prefers-reduced-motion: reduce) {
     .nav-link,
     .selection-box,
-    .lang-switch,
-    .lang-indicator,
-    .lang-option,
+    .switch,
+    .switch-indicator,
+    .switch-option,
     .i18n,
     .cursor-arrow svg,
     .carousel-btn,

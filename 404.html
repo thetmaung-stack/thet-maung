@@ -7,8 +7,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Page not found · Thet Maung</title>
     <meta name="robots" content="noindex">
-    <meta name="theme-color" content="#fffff5" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#161616" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#fffff5" media="(prefers-color-scheme: light)" data-scheme="light">
+    <meta name="theme-color" content="#161616" media="(prefers-color-scheme: dark)" data-scheme="dark">
+
+    <!-- Saved theme before first paint (the switch is on the home page; see index.html).
+         Editing this script changes its hash: update its sha256 in _headers (Content-Security-Policy). -->
+    <script>
+        (() => {
+            try {
+                const theme = localStorage.getItem('theme');
+                if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+            } catch {}
+        })();
+    </script>
 
     <link rel="icon" href="/assets/ico/favicon-v2.ico" sizes="32x32">
     <link rel="icon" href="/assets/svgs/favicon-v2.svg" type="image/svg+xml">

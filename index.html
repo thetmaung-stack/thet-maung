@@ -7,8 +7,8 @@
     <title>Thet Maung</title>
     <meta name="description" content="Software engineer building mobile apps with Flutter and React Native, now learning Kotlin and Jetpack Compose. Da Nang, Vietnam · UTC+7 · open to freelance.">
     <link rel="canonical" href="https://thetmaung.fyi/">
-    <meta name="theme-color" content="#fffff5" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#161616" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#fffff5" media="(prefers-color-scheme: light)" data-scheme="light">
+    <meta name="theme-color" content="#161616" media="(prefers-color-scheme: dark)" data-scheme="dark">
 
     <!-- Sharing -->
     <meta property="og:type" content="website">
@@ -29,16 +29,21 @@
     <meta name="twitter:image" content="https://thetmaung.fyi/assets/og-image.png">
     <meta name="twitter:image:alt" content="THET MAUNG — Da Nang, Vietnam · UTC+7 · open to freelance. Stack: Flutter, React Native / Expo, Jetpack Compose.">
 
-    <!-- Language before first paint: same rules as detect() in scripts.js, which stays the source of
-         translations. Until it fills in a non-English language, .i18n-pending hides the English text.
+    <!-- Theme and language before first paint.
+         Theme: a saved light or dark choice pins it (data-theme); no attribute follows the system.
+         Language: same rules as detect() in scripts.js, which stays the source of translations.
+         Until it fills in a non-English language, .i18n-pending hides the English text.
          Editing this script changes its hash: update the sha256 in _headers (Content-Security-Policy). -->
     <script>
         (() => {
             const root = document.documentElement;
             let lang = null;
+            let theme = null;
             try {
                 lang = localStorage.getItem('lang');
+                theme = localStorage.getItem('theme');
             } catch {}
+            if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
             if (lang !== 'en' && lang !== 'my') {
                 lang = (navigator.languages || [navigator.language])
                     .map((l) => l.slice(0, 2).toLowerCase())
@@ -160,10 +165,25 @@
 
     <footer class="site-footer">
         <p class="copyright">© <span data-year>2026</span> <span class="i18n" data-i18n="name">THET MAUNG</span></p>
-        <div class="lang-switch" role="group" aria-label="Language">
-            <span class="lang-indicator" aria-hidden="true"></span>
-            <button class="lang-option" type="button" data-lang="en" aria-label="English" aria-pressed="true">EN</button>
-            <button class="lang-option" type="button" data-lang="my" aria-label="မြန်မာ" aria-pressed="false">MY</button>
+        <div class="footer-controls">
+            <!-- Icons: sun, moon and monitor, drawn to match the stroke-rounded set -->
+            <div class="switch theme-switch" role="group" aria-label="Theme">
+                <span class="switch-indicator" aria-hidden="true"></span>
+                <button class="switch-option" type="button" data-theme-option="light" aria-label="Light" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.75V5M12 19v2.25M2.75 12H5M19 12h2.25M5.46 5.46l1.59 1.59M16.95 16.95l1.59 1.59M5.46 18.54l1.59-1.59M16.95 7.05l1.59-1.59"/></g></svg>
+                </button>
+                <button class="switch-option" type="button" data-theme-option="dark" aria-label="Dark" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a7 7 0 0 0 9.7 9.7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button class="switch-option" type="button" data-theme-option="system" aria-label="System" aria-pressed="true">
+                    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></g></svg>
+                </button>
+            </div>
+            <div class="switch lang-switch" role="group" aria-label="Language">
+                <span class="switch-indicator" aria-hidden="true"></span>
+                <button class="switch-option" type="button" data-lang="en" aria-label="English" aria-pressed="true">EN</button>
+                <button class="switch-option" type="button" data-lang="my" aria-label="မြန်မာ" aria-pressed="false">MY</button>
+            </div>
         </div>
     </footer>
 </body>

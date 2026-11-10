@@ -128,6 +128,95 @@
     });
 })();
 
+/* ---------- Theme switch ---------- */
+(() => {
+    const STORAGE_KEY = 'theme';
+    const SUPPORTED = ['light', 'dark', 'system'];
+
+    const root = document.documentElement;
+    const metas = [...document.querySelectorAll('meta[name="theme-color"][data-scheme]')];
+
+    function readSaved() {
+        try {
+            return localStorage.getItem(STORAGE_KEY);
+        } catch {
+            return null;
+        }
+    }
+
+    function save(theme) {
+        try {
+            // System is the default: store nothing for it
+            if (theme === 'system') localStorage.removeItem(STORAGE_KEY);
+            else localStorage.setItem(STORAGE_KEY, theme);
+        } catch {
+            /* storage unavailable: ignore */
+        }
+    }
+
+    // Light and dark pin the theme; system removes the pin so the CSS follows prefers-color-scheme.
+    // The browser UI color (theme-color) follows the same choice.
+    function setTheme(theme) {
+        if (theme === 'system') delete root.dataset.theme;
+        else root.dataset.theme = theme;
+
+        metas.forEach((meta) => {
+            const scheme = meta.dataset.scheme;
+            if (theme === 'system') meta.media = `(prefers-color-scheme: ${scheme})`;
+            else meta.media = scheme === theme ? 'all' : 'not all';
+        });
+    }
+
+    const saved = readSaved();
+    let current = SUPPORTED.includes(saved) ? saved : 'system';
+    setTheme(current); // the inline <head> script already set data-theme; this also syncs theme-color
+
+    const group = document.querySelector('.theme-switch');
+    if (!group) return;
+
+    const indicator = group.querySelector('.switch-indicator');
+    const options = [...group.querySelectorAll('.switch-option')];
+
+    function moveIndicator() {
+        const active = options.find((o) => o.getAttribute('aria-pressed') === 'true');
+        if (!active) return;
+        indicator.style.width = `${active.offsetWidth}px`;
+        indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+    }
+
+    function press(theme) {
+        options.forEach((o) => {
+            o.setAttribute('aria-pressed', String(o.dataset.themeOption === theme));
+        });
+        moveIndicator();
+    }
+
+    options.forEach((option) => {
+        option.addEventListener('click', () => {
+            const theme = option.dataset.themeOption;
+            if (theme === current) return;
+            current = theme;
+            press(theme);
+
+            // Swap every color in one step (see .is-theme-switching in styles.css)
+            root.classList.add('is-theme-switching');
+            setTheme(theme);
+            void document.body.offsetHeight; // commit the new colors with transitions off
+            requestAnimationFrame(() => root.classList.remove('is-theme-switching'));
+
+            save(theme);
+        });
+    });
+
+    // First paint: place the indicator without animation, then show the switch and enable sliding
+    press(current);
+    requestAnimationFrame(() => group.classList.add('is-ready'));
+
+    // Re-measure once the web font loads and on resize
+    if (document.fonts) document.fonts.ready.then(moveIndicator);
+    window.addEventListener('resize', moveIndicator);
+})();
+
 /* ---------- Language switch ---------- */
 (() => {
     const STORAGE_KEY = 'lang';
@@ -168,8 +257,8 @@
     const group = document.querySelector('.lang-switch');
     if (!group) return;
 
-    const indicator = group.querySelector('.lang-indicator');
-    const options = [...group.querySelectorAll('.lang-option')];
+    const indicator = group.querySelector('.switch-indicator');
+    const options = [...group.querySelectorAll('.switch-option')];
     const targets = [...document.querySelectorAll('[data-i18n]')];
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
