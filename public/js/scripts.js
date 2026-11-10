@@ -171,17 +171,20 @@
     let current = SUPPORTED.includes(saved) ? saved : 'system';
     setTheme(current); // the inline <head> script already set data-theme; this also syncs theme-color
 
-    const group = document.querySelector('.theme-switch');
-    if (!group) return;
+    // Every theme switch on the page (footer, phone settings) shows the same choice
+    const groups = [...document.querySelectorAll('.theme-switch')];
+    if (!groups.length) return;
 
-    const indicator = group.querySelector('.switch-indicator');
-    const options = [...group.querySelectorAll('.switch-option')];
+    const options = groups.flatMap((g) => [...g.querySelectorAll('.switch-option')]);
 
     function moveIndicator() {
-        const active = options.find((o) => o.getAttribute('aria-pressed') === 'true');
-        if (!active) return;
-        indicator.style.width = `${active.offsetWidth}px`;
-        indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+        groups.forEach((group) => {
+            const active = group.querySelector('.switch-option[aria-pressed="true"]');
+            if (!active) return;
+            const indicator = group.querySelector('.switch-indicator');
+            indicator.style.width = `${active.offsetWidth}px`;
+            indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+        });
     }
 
     function press(theme) {
@@ -208,9 +211,9 @@
         });
     });
 
-    // First paint: place the indicator without animation, then show the switch and enable sliding
+    // First paint: place the indicators without animation, then show the switches and enable sliding
     press(current);
-    requestAnimationFrame(() => group.classList.add('is-ready'));
+    requestAnimationFrame(() => groups.forEach((g) => g.classList.add('is-ready')));
 
     // Re-measure once the web font loads and on resize
     if (document.fonts) document.fonts.ready.then(moveIndicator);
@@ -236,6 +239,10 @@
             comingSoon: 'COMING SOON',
             projectsEmpty: 'Nothing to show here yet. I’m building a few personal projects and will add them as they ship. In the meantime, my code lives on GitHub.',
             status: 'DA NANG, VIETNAM · UTC+7 · OPEN TO FREELANCE',
+            // Phone settings. No Burmese yet in `my`: until it is added, these stay in English
+            settings: 'SETTINGS',
+            theme: 'THEME',
+            language: 'LANGUAGE',
             about: 'I’m a software engineer who builds mobile apps people actually enjoy using. For the past 3 years I’ve worked with Flutter and React Native on HR management, e-commerce, productivity and utility apps, caring as much about performance as I do about the details of the interface. Right now I’m going native, learning Android development with Kotlin and Jetpack Compose. If you have an idea you’d like to bring to life, I’d love to hear about it and help you build it.',
         },
         my: {
@@ -254,11 +261,11 @@
     };
 
     const root = document.documentElement;
-    const group = document.querySelector('.lang-switch');
-    if (!group) return;
+    // Every language switch on the page (footer, phone settings) shows the same choice
+    const groups = [...document.querySelectorAll('.lang-switch')];
+    if (!groups.length) return;
 
-    const indicator = group.querySelector('.switch-indicator');
-    const options = [...group.querySelectorAll('.switch-option')];
+    const options = groups.flatMap((g) => [...g.querySelectorAll('.switch-option')]);
     const targets = [...document.querySelectorAll('[data-i18n]')];
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -292,10 +299,13 @@
     }
 
     function moveIndicator() {
-        const active = options.find((o) => o.getAttribute('aria-pressed') === 'true');
-        if (!active) return;
-        indicator.style.width = `${active.offsetWidth}px`;
-        indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+        groups.forEach((group) => {
+            const active = group.querySelector('.switch-option[aria-pressed="true"]');
+            if (!active) return;
+            const indicator = group.querySelector('.switch-indicator');
+            indicator.style.width = `${active.offsetWidth}px`;
+            indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+        });
     }
 
     function setText(lang) {
@@ -381,7 +391,7 @@
     // First paint: place everything without animation, then enable sliding
     apply(detect(), false);
     root.classList.remove('i18n-pending'); // set by the inline script in <head>
-    requestAnimationFrame(() => group.classList.add('is-ready'));
+    requestAnimationFrame(() => groups.forEach((g) => g.classList.add('is-ready')));
 
     // Re-measure once the web font loads (it changes button widths) and on resize
     if (document.fonts) document.fonts.ready.then(moveIndicator);
@@ -446,6 +456,178 @@
     document.querySelectorAll('[data-carousel]').forEach(initCarousel);
 })();
 
+/* ---------- Phone: Android-style home screen (wide screens) ---------- */
+(() => {
+    const phone = document.querySelector('.phone');
+    if (!phone) return;
+
+    const root = document.documentElement;
+    const screen = phone.querySelector('.phone-screen');
+    const home = phone.querySelector('.phone-home');
+    const views = [...phone.querySelectorAll('.phone-view')];
+    const power = phone.querySelector('.phone-power');
+    const wake = phone.querySelector('.phone-off');
+    const homeBar = phone.querySelector('.phone-home-bar');
+    const times = [...phone.querySelectorAll('[data-phone-time]')];
+    const date = phone.querySelector('[data-phone-date]');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    let openView = null;
+    let opener = null;
+
+    // CSS scales the phone down on short screens: convert viewport px to the screen's own px
+    function toScreen(x, y) {
+        const s = screen.getBoundingClientRect();
+        const k = s.width / screen.offsetWidth || 1;
+        return { x: (x - s.left) / k, y: (y - s.top) / k };
+    }
+
+    /* Clock: Da Nang time (UTC+7, no daylight saving), whatever the visitor's time zone */
+    const OFFSET_MS = 7 * 60 * 60 * 1000;
+    const pad = (n) => String(n).padStart(2, '0');
+    let tickTimer = 0;
+
+    function tick() {
+        const now = new Date(Date.now() + OFFSET_MS); // read with the UTC getters
+        const time = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}`;
+        times.forEach((el) => {
+            el.textContent = time;
+        });
+
+        // Weekday and month in the page language, with Latin digits. Browsers without Burmese date
+        // data would fall back to a US format, so use the British one in that case too
+        const burmese = root.lang === 'my' && Intl.DateTimeFormat.supportedLocalesOf('my').length > 0;
+        const locale = burmese ? 'my-u-nu-latn' : 'en-GB';
+        let day;
+        try {
+            day = new Intl.DateTimeFormat(locale, {
+                timeZone: 'UTC',
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+            }).format(now);
+        } catch {
+            day = now.toUTCString().slice(0, 11);
+        }
+        date.textContent = `${day.toUpperCase()} · UTC+7`;
+
+        clearTimeout(tickTimer);
+        tickTimer = setTimeout(tick, 60000 - (Date.now() % 60000) + 50); // just after the next minute
+    }
+
+    /* Apps: only the open one (or home) can take focus; nothing while the screen is off */
+    function syncInert() {
+        const off = screen.classList.contains('is-off');
+        home.inert = off || Boolean(openView);
+        views.forEach((view) => {
+            view.inert = off || view !== openView;
+        });
+        homeBar.inert = off;
+    }
+
+    function open(name, from) {
+        const view = views.find((v) => v.dataset.phoneView === name);
+        if (!view || openView) return;
+
+        // Grow out of the tapped icon
+        const icon = from.querySelector('.phone-icon').getBoundingClientRect();
+        const origin = toScreen(icon.left + icon.width / 2, icon.top + icon.height / 2);
+        view.style.transformOrigin = `${origin.x}px ${origin.y}px`;
+
+        openView = view;
+        opener = from;
+        view.classList.add('is-open');
+        screen.classList.add('has-app');
+        syncInert();
+        view.querySelector('[data-phone-back]').focus({ preventScroll: true });
+    }
+
+    function close() {
+        if (!openView) return;
+        const from = opener;
+        openView.classList.remove('is-open');
+        screen.classList.remove('has-app');
+        openView = null;
+        opener = null;
+        syncInert();
+        from.focus({ preventScroll: true });
+    }
+
+    phone.querySelectorAll('[data-phone-open]').forEach((app) => {
+        app.addEventListener('click', () => open(app.dataset.phoneOpen, app));
+    });
+    phone.querySelectorAll('[data-phone-back]').forEach((back) => {
+        back.addEventListener('click', close);
+    });
+    phone.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && openView) close();
+    });
+
+    /* Home bar: tap to go home, or drag it up and the app follows before closing */
+    let drag = null;
+
+    homeBar.addEventListener('pointerdown', (e) => {
+        if (!openView) return;
+        drag = { start: toScreen(e.clientX, e.clientY).y, view: openView };
+        drag.view.classList.add('is-dragging');
+        homeBar.setPointerCapture(e.pointerId);
+    });
+
+    homeBar.addEventListener('pointermove', (e) => {
+        if (!drag) return;
+        const dy = Math.min(0, toScreen(e.clientX, e.clientY).y - drag.start);
+        drag.view.style.translate = `0 ${dy}px`;
+        drag.view.style.scale = String(Math.max(0.6, 1 + dy / 600));
+    });
+
+    // Release: drop the drag styles; the click that follows closes the app from where it was
+    function endDrag() {
+        if (!drag) return;
+        drag.view.classList.remove('is-dragging');
+        drag.view.style.translate = '';
+        drag.view.style.scale = '';
+        drag = null;
+    }
+
+    homeBar.addEventListener('pointerup', endDrag);
+    homeBar.addEventListener('pointercancel', endDrag);
+    homeBar.addEventListener('click', close);
+
+    /* Power key: screen off shows an always-on clock; tap the screen (or the key) to wake */
+    function setPower(on) {
+        screen.classList.toggle('is-off', !on);
+        power.setAttribute('aria-pressed', String(on));
+        syncInert();
+    }
+
+    power.addEventListener('click', () => setPower(screen.classList.contains('is-off')));
+    wake.addEventListener('click', () => {
+        const hadFocus = document.activeElement === wake;
+        setPower(true);
+        if (hadFocus) power.focus({ preventScroll: true }); // the wake button is gone: keep focus here
+    });
+
+    /* Tap feedback: a ripple where the screen was touched */
+    screen.addEventListener('pointerdown', (e) => {
+        if (reduceMotion.matches) return;
+        const p = toScreen(e.clientX, e.clientY);
+        const ripple = document.createElement('span');
+        ripple.className = 'phone-ripple';
+        ripple.style.left = `${p.x}px`;
+        ripple.style.top = `${p.y}px`;
+        screen.append(ripple);
+        ripple.addEventListener('animationend', () => ripple.remove());
+    });
+
+    syncInert();
+    tick();
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) tick(); // timers are throttled in background tabs
+    });
+    window.addEventListener('languagechange-ui', tick);
+    phone.classList.add('is-ready');
+})();
+
 /* ---------- Cute morphing cursor ---------- */
 (() => {
     // Only for a real mouse/trackpad; phones and tablets keep their normal touch behavior
@@ -457,6 +639,7 @@
 
     const LINK = 'a, button';
     const PLAIN = '[data-cursor="plain"]'; // keeps the normal arrow (e.g. project cards)
+    const TOUCH = '[data-cursor="touch"]'; // a touch dot instead (the phone screen)
     const TEXT = 'p, h1, h2, h3, li';
     const TIP_X = 3;                       // arrow tip (hotspot) inside the 24px SVG
     const TIP_Y = 2.5;
@@ -488,6 +671,7 @@
 
     let link = null;
     let textHeight = 0;
+    let touching = false;
     let down = false;
 
     function releaseLink() {
@@ -498,6 +682,12 @@
     }
 
     function getTarget() {
+        // Touch dot, a little smaller while pressed
+        if (touching) {
+            const d = down ? 20 : 26;
+            return { x: pointer.x, y: pointer.y, w: d, h: d, r: d / 2 };
+        }
+
         // Morph into the hovered button's shape
         if (link) {
             const b = link.getBoundingClientRect();
@@ -543,7 +733,8 @@
         // The arrow follows the pointer exactly, with its tip on the hotspot
         arrow.style.transform = `translate3d(${pointer.x - TIP_X}px, ${pointer.y - TIP_Y}px, 0)`;
 
-        const plain = e.target.closest(PLAIN);
+        touching = Boolean(e.target.closest(TOUCH));
+        const plain = touching || e.target.closest(PLAIN);
         const nextLink = plain ? null : e.target.closest(LINK);
         if (nextLink !== link) {
             releaseLink();
@@ -555,7 +746,8 @@
             ? Math.round((parseFloat(getComputedStyle(text).fontSize) || 14) * 1.3)
             : 0;
 
-        root.classList.toggle('cursor-hide-arrow', Boolean(link || textHeight));
+        root.classList.toggle('cursor-touch', touching);
+        root.classList.toggle('cursor-hide-arrow', Boolean(link || textHeight || touching));
 
         // Magnetic pull: the button leans toward the pointer
         if (link && PULL) {
@@ -605,7 +797,8 @@
         if (idle) Object.assign(cur, t); // land exactly on the target before sleeping
 
         // Stay behind the button while on it, and while shrinking back out of its shape
-        const behind = Boolean(link) || (cur.w > 4 && cur.h < cur.w * 2);
+        // (never for the touch dot: it has to show on top of the phone screen)
+        const behind = Boolean(link) || (!touching && cur.w > 4 && cur.h < cur.w * 2);
         root.classList.toggle('cursor-on-link', behind);
 
         cursor.style.width = `${cur.w}px`;

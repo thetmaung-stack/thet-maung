@@ -14,6 +14,7 @@ Personal portfolio site of Thet Maung, mobile software engineer. Live at <https:
 
 - **English / Burmese switch**: the language is picked before first paint (saved choice, else the browser language, else English), so Burmese visitors never see English flash first. Switching animates the text and saves the choice in `localStorage`.
 - **Light, dark and system themes**: a footer switch, left of the language switch. System (the default) follows `prefers-color-scheme`; light or dark pins the theme and the browser UI color (`theme-color`). The choice is saved in `localStorage` and applied before first paint on both pages, so there is no flash of the other theme. The favicon follows the system scheme.
+- **Phone**: on screens at least 1180px wide and 560px tall, an Android-style phone sits left of the column, scaled with the screen height so its top and bottom line up with the header and the footer (0.8× to 1.45× its 288×620 design size). Its home screen has a Da Nang clock, apps (Projects, Stack, Settings) that grow out of their icons, a dock with the four links, a home bar (tap or drag up), a power key with an always-on clock, and tap ripples. Settings holds the same theme and language switches as the footer, kept in sync. Over the screen, the cursor becomes a touch dot. Needs JavaScript; without it the page keeps its single column.
 - **Animated text selection**: highlight boxes drawn by `scripts.js`; the native highlight is used when JavaScript is off.
 - **Morphing cursor** that takes the shape of the hovered button and becomes a text bar over text. Only on fine pointers (mouse, trackpad); touch devices keep their normal behavior. The animation loop sleeps when the cursor is idle.
 - **Reduced motion**: with `prefers-reduced-motion`, UI transitions, the language animation, cursor easing and the buttons' magnetic pull are turned off.
@@ -25,12 +26,12 @@ Personal portfolio site of Thet Maung, mobile software engineer. Live at <https:
 
 ```
 .
-├── index.html            The page: markup, meta and sharing tags, inline first-paint theme + language script
+├── index.html            The page: markup (phone included), meta and sharing tags, inline first-paint script
 ├── 404.html              Not-found page, served for any missing path (so all its URLs are root-relative)
 ├── public/
 │   ├── css/styles.css    All styles: @font-face, light/dark tokens, layout, animations
 │   └── js/scripts.js     Selection layer, footer year, theme switch, translations + language switch,
-│                         carousel (not on the page right now), morphing cursor
+│                         carousel (not on the page right now), phone, morphing cursor
 ├── assets/
 │   ├── fonts/            JetBrains Mono and Noto Sans Myanmar: WOFF2 served, TTF kept as fallback and source
 │   ├── ico/, svgs/       Favicons (the SVG follows light/dark)
@@ -73,7 +74,7 @@ npx wrangler dev
 
 ## Maintenance gotchas
 
-- **The inline `<head>` scripts are pinned by hash in the CSP.** `index.html` has one inline script (it sets the theme and language before first paint), and `404.html` has one (theme only). The `Content-Security-Policy` in `_headers` allows them only by their `sha256`, index first. After any edit to either, even whitespace, recompute its hash and replace that `sha256-…` value in `_headers`. Otherwise browsers block the script: Burmese visitors see English first again, and a saved theme flashes the system one first. From the repo root:
+- **The inline `<head>` scripts are pinned by hash in the CSP.** `index.html` has one inline script (before first paint, it sets the `has-js` flag, the theme and the language), and `404.html` has one (theme only). The `Content-Security-Policy` in `_headers` allows them only by their `sha256`, index first. After any edit to either, even whitespace, recompute its hash and replace that `sha256-…` value in `_headers`. Otherwise browsers block the script: Burmese visitors see English first again, and a saved theme flashes the system one first. From the repo root:
 
   ```bash
   for f in index.html 404.html; do echo "$f"; python3 -c "import re,sys,hashlib,base64;s=re.search(r'<script>(.*?)</script>',open(sys.argv[1]).read(),re.S).group(1);print(base64.b64encode(hashlib.sha256(s.encode()).digest()).decode())" "$f"; done

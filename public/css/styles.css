@@ -34,6 +34,10 @@
     --switch-height: 28px;
     --tabbar-height: 60px;
     --content-width: 43rem;
+    --phone-width: 288px;
+    --phone-height: 620px;
+    --phone-gap: 72px;
+    --phone-scale: 1;
     --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
     --font-stack: 'JetBrains Mono Variable', 'Noto Sans Myanmar Variable', monospace;
     /* Poster red #ef4847, deepened on cream so small red text stays above 4.5:1 */
@@ -757,6 +761,501 @@ span.i18n {
     color: var(--bg);
 }
 
+/* Over the phone screen: a see-through touch dot, like Android's "Show taps" (neutral gray so it
+   shows on the screen in both themes and on the black screen-off state) */
+.cursor-touch .cursor {
+    background-color: rgb(140 140 136 / 0.45);
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.55);
+}
+
+/* Phone: an Android-style home screen pinned left of the column. Only on screens wide and tall
+   enough for both, and only with JavaScript; otherwise the page keeps its single column */
+.phone {
+    display: none;
+}
+
+/* The phone spans the column's height: from the header (body padding-top, 48px) to the bottom of the
+   footer (body padding-bottom, 16px), so it scales by (viewport height - 64px) / its 620px height.
+   Kept between 0.8 and 1.45, and never wider than the room left of the column.
+   tan(atan2(a, b)) is how CSS turns a ratio of two lengths into a plain number. */
+@supports (scale: tan(atan2(1px, 1px))) {
+    :root {
+        --phone-scale: clamp(
+            0.8,
+            min(
+                tan(atan2(100dvh - 64px, var(--phone-height))),
+                tan(atan2(100vw - 32px - var(--phone-gap) - var(--content-width), var(--phone-width)))
+            ),
+            1.45
+        );
+    }
+}
+
+@media (min-width: 1180px) and (min-height: 560px) {
+    /* Shift the column right by the phone's width + gap, so phone and column center together */
+    .has-js body {
+        padding-left: calc(16px + var(--phone-width) * var(--phone-scale) + var(--phone-gap));
+    }
+
+    .has-js .phone {
+        display: block;
+        position: fixed;
+        top: 48px; /* level with the header */
+        left: calc(50% - (var(--phone-width) * var(--phone-scale) + var(--phone-gap) + var(--content-width)) / 2);
+        z-index: 1;
+        width: var(--phone-width);
+        max-width: none;
+        scale: var(--phone-scale);
+        transform-origin: top left;
+    }
+}
+
+.phone-frame {
+    position: relative;
+    height: var(--phone-height);
+    padding: 9px;
+    box-sizing: border-box;
+    border-radius: 44px;
+    background-color: var(--fg);
+    box-shadow:
+        0 30px 60px -24px rgb(0 0 0 / 0.45),
+        0 0 0 1px var(--divider);
+}
+
+/* Side keys: power (a real button) and volume (decoration) */
+.phone-power,
+.phone-volume {
+    position: absolute;
+    right: -3px;
+    width: 4px;
+    border: 0;
+    border-radius: 0 3px 3px 0;
+    background-color: var(--fg);
+}
+
+.phone-power {
+    top: 116px;
+    height: 54px;
+    padding: 0;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        translate 0.2s var(--ease-out);
+}
+
+/* A wider invisible hit area than the 4px key */
+.phone-power::before {
+    content: "";
+    position: absolute;
+    inset: -4px -10px -4px -4px;
+}
+
+.phone-power:hover,
+.phone-power:focus-visible {
+    background-color: var(--accent);
+    outline: none;
+}
+
+.phone-volume {
+    top: 186px;
+    height: 84px;
+}
+
+.phone-screen {
+    position: relative;
+    isolation: isolate;
+    height: 100%;
+    /* clip, not just hidden: the wallpaper overflows, and a hidden box can still be scrolled
+       (by focus or scrollIntoView), which would shift the whole screen */
+    overflow: hidden;
+    overflow: clip;
+    border-radius: 35px;
+    background-color: var(--bg);
+    color: var(--fg);
+    font-size: 11px;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.phone-screen button,
+.phone-screen a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.phone-screen :focus-visible {
+    outline: 1px dashed var(--fg);
+    outline-offset: 2px;
+}
+
+/* The clock stays blank until scripts.js has set the real time */
+.phone:not(.is-ready) [data-phone-time],
+.phone:not(.is-ready) [data-phone-date] {
+    visibility: hidden;
+}
+
+.phone-statusbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 32px;
+    padding: 0 22px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+.phone-camera {
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    width: 11px;
+    height: 11px;
+    margin-left: -5.5px;
+    border-radius: 50%;
+    background-color: #050505;
+    box-shadow: 0 0 0 1.5px rgb(128 128 128 / 0.25);
+}
+
+.phone-indicators {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.phone-indicators svg {
+    display: block;
+}
+
+/* Home screen, with a poster-red circle as the wallpaper */
+.phone-home {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 32px 0 30px;
+    transition:
+        scale 0.32s var(--ease-out),
+        opacity 0.32s ease;
+}
+
+.phone-home::before {
+    content: "";
+    position: absolute;
+    right: -150px;
+    bottom: -130px;
+    z-index: -1;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background-color: var(--accent);
+}
+
+/* An app is open: home recedes behind it */
+.phone-screen.has-app .phone-home {
+    scale: 0.92;
+    opacity: 0;
+}
+
+.phone-clock {
+    padding: 30px 22px 0;
+}
+
+.phone-clock-time {
+    margin: 0;
+    font-size: 64px;
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.phone-clock-date {
+    margin: 10px 0 0;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: color-mix(in srgb, var(--fg) 65%, transparent);
+}
+
+.phone-apps,
+.phone-dock {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.phone-apps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px 0;
+    margin-top: 32px;
+    padding: 0 10px;
+}
+
+.phone-dock {
+    display: flex;
+    justify-content: space-around;
+    margin: auto 12px 0;
+    padding: 10px 6px;
+    border-radius: 28px;
+    background-color: color-mix(in srgb, var(--bg) 72%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.phone-app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.phone-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background-color: color-mix(in srgb, var(--fg) 8%, var(--bg));
+    transition: scale 0.15s var(--ease-out);
+}
+
+.phone-icon--accent {
+    background-color: var(--accent);
+    color: var(--accent-fg);
+}
+
+.phone-app:active .phone-icon {
+    scale: 0.9;
+}
+
+.phone-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* Long labels end in "…", as on Android (Burmese has no spaces to wrap at) */
+.phone-label {
+    max-width: calc(100% - 6px);
+    overflow: hidden;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Apps: full-screen views that grow out of their icon (scripts.js sets the transform-origin) */
+.phone-view {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 32px 0 30px;
+    border-radius: 24px;
+    background-color: var(--bg);
+    opacity: 0;
+    scale: 0.3;
+    visibility: hidden;
+    transition:
+        opacity 0.2s ease,
+        scale 0.3s var(--ease-out),
+        translate 0.3s var(--ease-out),
+        border-radius 0.3s var(--ease-out),
+        visibility 0s linear 0.3s;
+}
+
+.phone-view.is-open {
+    border-radius: 0;
+    opacity: 1;
+    scale: 1;
+    visibility: visible;
+    transition:
+        opacity 0.15s ease,
+        scale 0.32s var(--ease-out),
+        translate 0.3s var(--ease-out),
+        border-radius 0.32s var(--ease-out),
+        visibility 0s;
+}
+
+/* While the home bar is being dragged, the view follows the pointer */
+.phone-view.is-dragging {
+    transition: none;
+}
+
+.phone-appbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px 8px 8px;
+}
+
+.phone-back {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.phone-back svg {
+    width: 20px;
+    height: 20px;
+}
+
+.phone-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.phone-body {
+    flex: 1;
+    margin: 0;
+    padding: 8px 20px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.phone-text {
+    margin: 14px 0 0;
+    line-height: 1.7;
+    text-transform: uppercase;
+}
+
+.phone-list,
+.phone-settings {
+    list-style: none;
+}
+
+.phone-list li,
+.phone-settings li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--divider);
+}
+
+.phone-list li {
+    font-weight: 700;
+}
+
+.phone-list .stack-tag {
+    margin-left: auto;
+    font-weight: 400;
+}
+
+.phone-list-index {
+    font-weight: 400;
+    color: color-mix(in srgb, var(--fg) 50%, transparent);
+}
+
+.phone-settings li {
+    justify-content: space-between;
+}
+
+/* Bottom gesture handle: tap or drag up to go home */
+.phone-home-bar {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    z-index: 3;
+    width: 120px;
+    height: 22px;
+    margin-left: -60px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    touch-action: none;
+}
+
+.phone-home-bar::before {
+    content: "";
+    position: absolute;
+    top: 9px;
+    left: 12px;
+    right: 12px;
+    height: 4px;
+    border-radius: 2px;
+    background-color: color-mix(in srgb, var(--fg) 45%, transparent);
+}
+
+/* Screen off (power key): black, with an always-on clock. Tap to wake */
+.phone-off {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background-color: #000;
+    color: rgb(255 255 245 / 0.55);
+    font: inherit;
+    font-size: 44px;
+    font-weight: 100;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.3s ease,
+        visibility 0s linear 0.3s;
+}
+
+.phone-screen.is-off .phone-off {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease;
+}
+
+/* Tap feedback */
+.phone-ripple {
+    position: absolute;
+    z-index: 6;
+    width: 64px;
+    height: 64px;
+    margin: -32px 0 0 -32px;
+    border-radius: 50%;
+    background-color: rgb(140 140 136 / 0.35);
+    pointer-events: none;
+    animation: phone-ripple 0.5s var(--ease-out) forwards;
+}
+
+@keyframes phone-ripple {
+    from {
+        opacity: 1;
+        scale: 0.2;
+    }
+
+    to {
+        opacity: 0;
+        scale: 1.6;
+    }
+}
+
 /* Mobile: bottom tab bar */
 @media (max-width: 600px) {
     body {
@@ -828,7 +1327,14 @@ span.i18n {
     .carousel-btn,
     .project-card,
     .project-thumb,
-    .stack-card {
+    .stack-card,
+    .phone-power,
+    .phone-home,
+    .phone-icon,
+    .phone-view,
+    .phone-view.is-open,
+    .phone-off,
+    .phone-screen.is-off .phone-off {
         transition: none;
     }
 
