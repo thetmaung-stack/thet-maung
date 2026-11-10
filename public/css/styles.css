@@ -382,6 +382,28 @@ body::before {
     color: color-mix(in srgb, var(--fg) 80%, transparent);
 }
 
+/* Projects: empty state until there are projects to show */
+.projects-section {
+    margin-bottom: 48px;
+}
+
+.projects-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 24px 16px;
+    border: 1px dashed var(--divider);
+}
+
+.projects-empty-text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--fg) 80%, transparent);
+}
+
 /* Stack: a static grid of soft filled tiles, no scrolling */
 .stack-section {
     margin-bottom: 48px;
