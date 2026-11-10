@@ -42,7 +42,8 @@ Personal portfolio site of Thet Maung, mobile software engineer. Live at <https:
 ├── sitemap.xml           The one URL, on https://thetmaung.fyi/
 ├── wrangler.jsonc        Worker config: serve the repo root as static assets, 404-page handling
 ├── .assetsignore         Repo files kept off the public site
-└── .gitignore
+├── .gitignore
+└── LICENSE               MIT, for the code (see License below)
 ```
 
 ## Local development
@@ -61,7 +62,7 @@ npx wrangler dev
 
 - Cloudflare Workers Static Assets with no Worker script. `wrangler.jsonc` sets `assets.directory` to `"./"` (the repo root) and `not_found_handling` to `"404-page"`.
 - Every push to `main` deploys through Workers Builds (set up in the Cloudflare dashboard): no build command, deploy command `npx wrangler deploy`.
-- Because the whole repo root is the assets directory, `.assetsignore` keeps repo-only files off the public site: `.git`, `README.md`, `wrangler.jsonc`, `.gitignore`, `.assetsignore`, `tools/`, `.wrangler`, `node_modules`, `.DS_Store`.
+- Because the whole repo root is the assets directory, `.assetsignore` keeps repo-only files off the public site: `.git`, `README.md`, `LICENSE`, `wrangler.jsonc`, `.gitignore`, `.assetsignore`, `tools/`, `.wrangler`, `node_modules`, `.DS_Store`.
 - **Any new file that should not be public must be added to `.assetsignore`.** Check with `npx wrangler dev`: the file should return 404.
 - `_headers` is read by Cloudflare and is not served itself.
 - To validate the config without deploying:
@@ -130,9 +131,8 @@ npx wrangler dev
 
 ## License
 
-TBD
-
-The license will cover the code. The site's content and the résumé are not covered by it. Third-party parts keep their own terms:
-
-- JetBrains Mono and Noto Sans Myanmar: SIL Open Font License 1.1 (license text referenced in each font file's metadata).
-- Icons: derived from Hugeicons free icons (MIT).
+- **Code: [MIT](LICENSE).** The HTML structure, CSS, JavaScript, `_headers`, config and `tools/` may be reused under the MIT terms.
+- **Content: all rights reserved.** Not covered by the MIT license: the written content (the bio and other text in `index.html`, `404.html` and the translations in `scripts.js`), the résumé in `assets/pdfs/`, and the name and TM monogram (favicons, `og-image.png`).
+- **Third-party parts keep their own terms:**
+  - JetBrains Mono and Noto Sans Myanmar: SIL Open Font License 1.1 (license text referenced in each font file's metadata).
+  - Icons: derived from Hugeicons free icons (MIT).
