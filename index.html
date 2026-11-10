@@ -29,6 +29,30 @@
     <meta name="twitter:image" content="https://thetmaung.fyi/assets/og-image.png">
     <meta name="twitter:image:alt" content="THET MAUNG — Da Nang, Vietnam · UTC+7 · open to freelance. Stack: Flutter, React Native / Expo, Jetpack Compose.">
 
+    <!-- Language before first paint: same rules as detect() in scripts.js, which stays the source of
+         translations. Until it fills in a non-English language, .i18n-pending hides the English text.
+         Editing this script changes its hash: update the sha256 in _headers (Content-Security-Policy). -->
+    <script>
+        (() => {
+            const root = document.documentElement;
+            let lang = null;
+            try {
+                lang = localStorage.getItem('lang');
+            } catch {}
+            if (lang !== 'en' && lang !== 'my') {
+                lang = (navigator.languages || [navigator.language])
+                    .map((l) => l.slice(0, 2).toLowerCase())
+                    .find((l) => l === 'en' || l === 'my') || 'en';
+            }
+            root.lang = lang;
+            if (lang !== 'en') {
+                root.classList.add('i18n-pending');
+                // Never leave the text hidden if scripts.js fails to load
+                setTimeout(() => root.classList.remove('i18n-pending'), 3000);
+            }
+        })();
+    </script>
+
     <!-- Favicon -->
     <link rel="icon" href="assets/ico/favicon.ico" sizes="32x32">
     <link rel="icon" href="assets/svgs/favicon.svg" type="image/svg+xml">

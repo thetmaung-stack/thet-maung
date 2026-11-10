@@ -286,6 +286,7 @@
 
     // First paint: place everything without animation, then enable sliding
     apply(detect(), false);
+    root.classList.remove('i18n-pending'); // set by the inline script in <head>
     requestAnimationFrame(() => group.classList.add('is-ready'));
 
     // Re-measure once the web font loads (it changes button widths) and on resize

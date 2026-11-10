@@ -488,6 +488,13 @@ span.i18n {
     transition: none;
 }
 
+/* Until scripts.js fills in a non-English language, hide the English text instead of flashing it
+   (visibility is not transitioned, so the text appears instantly) */
+.i18n-pending .i18n,
+.i18n-pending .lang-switch {
+    visibility: hidden;
+}
+
 /* Burmese: taller lines for stacked vowel marks and medials */
 :lang(my) .about {
     line-height: 2.2;
