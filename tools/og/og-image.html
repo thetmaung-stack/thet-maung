@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<!--
+    Source for assets/og-image.png (1200×630). Not deployed (tools/ is in .assetsignore).
+    Uses the site's own tokens, font and grain. Regenerate from the repo root with:
+
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+        --allow-file-access-from-files --hide-scrollbars --force-device-scale-factor=1 \
+        --window-size=1200,630 --virtual-time-budget=3000 \
+        --screenshot="$PWD/assets/og-image.png" "file://$PWD/tools/og/og-image.html"
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>og-image</title>
+    <style>
+        @font-face {
+            font-family: 'JetBrains Mono Variable';
+            src: url('../../assets/fonts/jetbrains/JetBrainsMono-VariableFont_wght.ttf') format('truetype');
+            font-weight: 100 800;
+        }
+
+        :root {
+            --bg: #f6f1e7;
+            --fg: #2b2925;
+            --divider: rgb(43 41 37 / 0.25);
+            --accent: #b5532c;
+        }
+
+        html, body {
+            margin: 0;
+            width: 1200px;
+            height: 630px;
+            overflow: hidden;
+        }
+
+        body {
+            position: relative;
+            isolation: isolate;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 64px 88px;
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'JetBrains Mono Variable', monospace;
+        }
+
+        /* Same grain as the site */
+        body::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.08;
+            mix-blend-mode: multiply;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 200px 200px;
+        }
+
+        .mark {
+            width: 64px;
+            height: 64px;
+        }
+
+        .name {
+            margin: 40px 0 24px;
+            font-size: 96px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .divider {
+            height: 2px;
+            background-color: var(--divider);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin: 24px 0 0;
+            font-size: 28px;
+            letter-spacing: 0.04em;
+            color: color-mix(in srgb, var(--fg) 65%, transparent);
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--accent);
+        }
+
+        /* Stack tiles, as on the site */
+        .stack {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-top: auto;
+        }
+
+        .stack div {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 136px;
+            padding: 14px 16px;
+            box-sizing: border-box;
+            background-color: color-mix(in srgb, var(--fg) 5%, transparent);
+        }
+
+        .stack i {
+            font-style: normal;
+            font-size: 15px;
+            letter-spacing: 0.06em;
+            color: color-mix(in srgb, var(--fg) 50%, transparent);
+        }
+
+        .stack p {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .stack b {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="1" y="1" width="30" height="30" rx="7" fill="#f6f1e7" stroke="#2b2925" stroke-width="2"/>
+        <g fill="none" stroke="#2b2925" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 10 H14 M10 10 V22"/>
+            <path d="M17 22 V10 L21.5 17 L26 10 V22"/>
+        </g>
+    </svg>
+    <h1 class="name">THET MAUNG</h1>
+    <div class="divider"></div>
+    <p class="status"><span class="status-dot"></span>DA NANG, VIETNAM · UTC+7 · OPEN TO FREELANCE</p>
+    <div class="stack">
+        <div><i>01</i><p>FLUTTER<br><b>+</b> FIREBASE</p></div>
+        <div><i>02</i><p>RN / EXPO<br><b>+</b> FIREBASE</p></div>
+        <div><i>03</i><p>FLUTTER<br><b>+</b> SUPABASE</p></div>
+        <div><i>04</i><p>FLUTTER<br><b>+</b> APPWRITE</p></div>
+        <div><i>05</i><p>JETPACK COMPOSE<br><b>+</b> FIREBASE</p></div>
+    </div>
+</body>
+</html>
